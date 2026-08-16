@@ -3,1239 +3,419 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Сломанные Часы — Эпилог</title>
+    <title>Dreamer's House</title>
     <style>
-        /* =============================================
-           ГЛОБАЛЬНЫЙ СБРОС И СТИЛЬ LOMANDO
-           ============================================= */
-        @import url('https://fonts.googleapis.com/css2?family=Creepster&family=Press+Start+2P&display=swap');
-
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            user-select: none;
         }
-
         body {
-            background: #000;
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-family: 'Courier New', monospace;
-            overflow: hidden;
-            cursor: default;
-            image-rendering: pixelated;
-        }
-
-        /* =============================================
-           СТАТИЧЕСКИЙ ШУМ (LOMANDO-СТИЛЬ)
-           ============================================= */
-        #static-overlay {
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            pointer-events: none;
-            z-index: 999;
-            background: repeating-linear-gradient(
-                0deg,
-                rgba(0,0,0,0.03) 0px,
-                rgba(255,255,255,0.03) 2px,
-                rgba(0,0,0,0.03) 4px
-            );
-            animation: staticMove 0.1s infinite linear;
-            opacity: 0.3;
-        }
-
-        @keyframes staticMove {
-            0% { background-position: 0 0; }
-            100% { background-position: 0 100%; }
-        }
-
-        /* =============================================
-           ИГРОВОЙ КОНТЕЙНЕР
-           ============================================= */
-        #game-container {
-            width: 100vw;
-            height: 100vh;
-            position: relative;
-            background: radial-gradient(ellipse at center, #1a0505 0%, #000 100%);
-            box-shadow: inset 0 0 200px rgba(255,0,0,0.2);
-            overflow: hidden;
-        }
-
-        /* =============================================
-           ВИНЬЕТКА (LOMANDO)
-           ============================================= */
-        #vignette {
-            position: absolute;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: 
-                radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.9) 100%),
-                repeating-linear-gradient(45deg, rgba(0,0,0,0.1) 0px, rgba(0,0,0,0.1) 2px, transparent 2px, transparent 4px);
-            pointer-events: none;
-            z-index: 10;
-        }
-
-        /* =============================================
-           ГЛАВНЫЙ ЭКРАН
-           ============================================= */
-        #main-screen {
-            position: absolute;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 5;
-            background: rgba(0,0,0,0.8);
-            transition: opacity 1s ease;
-        }
-
-        #main-screen.hidden {
-            opacity: 0;
-            pointer-events: none;
-        }
-
-        #main-title {
-            font-family: 'Creepster', cursive;
-            font-size: 64px;
-            color: #cc0000;
-            text-shadow: 
-                0 0 20px rgba(255,0,0,0.5),
-                0 0 40px rgba(255,0,0,0.3),
-                0 0 80px rgba(255,0,0,0.1);
-            animation: titleFlicker 3s infinite;
-            letter-spacing: 8px;
-            text-align: center;
-        }
-
-        #main-subtitle {
-            font-family: 'Press Start 2P', monospace;
-            font-size: 14px;
-            color: #6a2a2a;
-            margin-top: 20px;
-            letter-spacing: 4px;
-            text-shadow: 0 0 20px rgba(255,0,0,0.2);
-        }
-
-        #start-btn {
-            margin-top: 50px;
-            background: transparent;
-            border: 2px solid #3a1a1a;
-            color: #8a4a4a;
-            padding: 15px 50px;
-            font-family: 'Press Start 2P', monospace;
-            font-size: 16px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            letter-spacing: 2px;
-        }
-
-        #start-btn:hover {
-            background: #1a0a0a;
-            border-color: #8a2a2a;
-            color: #cc4a4a;
-            box-shadow: 0 0 50px rgba(255,0,0,0.2);
-        }
-
-        @keyframes titleFlicker {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.7; }
-            53% { opacity: 1; }
-            56% { opacity: 0.5; }
-            60% { opacity: 1; }
-        }
-
-        /* =============================================
-           КОМНАТЫ
-           ============================================= */
-        #room-container {
-            position: absolute;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            z-index: 5;
-            display: none;
-            opacity: 0;
-            transition: opacity 1s ease;
-        }
-
-        #room-container.active {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            opacity: 1;
-        }
-
-        /* =============================================
-           ИНТЕРФЕЙС КОМНАТЫ
-           ============================================= */
-        #room {
-            width: 100%;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            gap: 20px;
-            padding: 20px;
-            position: relative;
-        }
-
-        /* Номер комнаты */
-        #room-number {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            font-family: 'Press Start 2P', monospace;
-            font-size: 12px;
-            color: #3a1a1a;
-            letter-spacing: 2px;
-            opacity: 0.5;
-        }
-
-        /* =============================================
-           ГОЛОВОЛОМКА 1: КОДОВЫЙ ЗАМОК
-           ============================================= */
-        .puzzle-container {
-            background: rgba(10, 5, 5, 0.95);
-            border: 2px solid #1a0a0a;
-            padding: 40px;
-            max-width: 500px;
-            width: 90%;
-            text-align: center;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 0 100px rgba(255,0,0,0.1);
-            position: relative;
-        }
-
-        .puzzle-title {
-            font-family: 'Creepster', cursive;
-            font-size: 28px;
-            color: #6a2a2a;
-            margin-bottom: 20px;
-            letter-spacing: 4px;
-            text-shadow: 0 0 30px rgba(255,0,0,0.2);
-        }
-
-        .puzzle-description {
-            color: #6a3a3a;
-            font-size: 14px;
-            margin-bottom: 30px;
-            line-height: 1.8;
-            letter-spacing: 1px;
-        }
-
-        /* Поле ввода */
-        .code-input-group {
-            display: flex;
-            gap: 10px;
-            justify-content: center;
-            margin: 20px 0;
-        }
-
-        .code-input-group input {
             background: #0a0a0a;
-            border: 1px solid #2a1a1a;
-            color: #aa4a4a;
-            padding: 10px 15px;
+            color: #b0b0b0;
             font-family: 'Courier New', monospace;
-            font-size: 24px;
-            width: 120px;
-            text-align: center;
-            letter-spacing: 8px;
-            outline: none;
-            transition: all 0.3s ease;
-        }
-
-        .code-input-group input:focus {
-            border-color: #6a2a2a;
-            box-shadow: 0 0 30px rgba(255,0,0,0.2);
-        }
-
-        .code-input-group button {
-            background: #1a0a0a;
-            border: 1px solid #2a1a1a;
-            color: #aa4a4a;
-            padding: 10px 25px;
-            font-family: 'Press Start 2P', monospace;
-            font-size: 14px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .code-input-group button:hover {
-            background: #2a1a1a;
-            border-color: #6a2a2a;
-            box-shadow: 0 0 30px rgba(255,0,0,0.2);
-        }
-
-        /* =============================================
-           ГОЛОВОЛОМКА 2: ЦВЕТОВАЯ ПОСЛЕДОВАТЕЛЬНОСТЬ
-           ============================================= */
-        .color-puzzle {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 20px;
-        }
-
-        .color-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 10px;
-            width: 100%;
-            max-width: 300px;
-        }
-
-        .color-btn {
-            width: 60px;
-            height: 60px;
-            border: 2px solid #1a0a0a;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            border-radius: 4px;
-        }
-
-        .color-btn:hover {
-            transform: scale(1.05);
-            box-shadow: 0 0 30px rgba(255,255,255,0.1);
-        }
-
-        .color-btn.selected {
-            border-color: #ffffff;
-            box-shadow: 0 0 30px rgba(255,255,255,0.3);
-        }
-
-        .color-btn.correct {
-            border-color: #00ff00;
-            box-shadow: 0 0 30px rgba(0,255,0,0.3);
-        }
-
-        .color-btn.wrong {
-            border-color: #ff0000;
-            box-shadow: 0 0 30px rgba(255,0,0,0.5);
-            animation: wrongFlash 0.5s ease 3;
-        }
-
-        @keyframes wrongFlash {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.2; }
-        }
-
-        /* =============================================
-           ГОЛОВОЛОМКА 3: ПОИСК ПРЕДМЕТОВ
-           ============================================= */
-        .search-area {
-            position: relative;
-            width: 100%;
-            max-width: 400px;
-            height: 300px;
-            background: #0a0505;
-            border: 1px solid #1a0a0a;
-            overflow: hidden;
-            cursor: crosshair;
-        }
-
-        .search-area img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            filter: grayscale(100%) contrast(150%) brightness(30%);
-            transition: filter 0.5s ease;
-        }
-
-        .search-area:hover img {
-            filter: grayscale(80%) contrast(130%) brightness(40%);
-        }
-
-        .hidden-item {
-            position: absolute;
-            width: 30px;
-            height: 30px;
-            border: 2px solid rgba(255,0,0,0.5);
-            border-radius: 50%;
-            cursor: pointer;
-            display: none;
-            transition: all 0.3s ease;
-            animation: pulse 1s infinite;
-        }
-
-        .hidden-item.visible {
-            display: block;
-        }
-
-        .hidden-item.found {
-            border-color: #00ff00;
-            background: rgba(0,255,0,0.2);
-            animation: none;
-        }
-
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); opacity: 0.5; }
-            50% { transform: scale(1.2); opacity: 1; }
-        }
-
-        /* =============================================
-           ИНВЕНТАРЬ
-           ============================================= */
-        #inventory {
-            position: absolute;
-            bottom: 20px;
-            right: 20px;
-            background: rgba(10, 5, 5, 0.95);
-            border: 1px solid #1a0a0a;
-            padding: 10px 15px;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            backdrop-filter: blur(5px);
-            z-index: 20;
-        }
-
-        #inventory span {
-            color: #3a1a1a;
-            font-size: 10px;
-            font-family: 'Press Start 2P', monospace;
-            letter-spacing: 2px;
-        }
-
-        #items {
-            display: flex;
-            gap: 8px;
-        }
-
-        .item {
-            width: 35px;
-            height: 35px;
-            background: #0a0505;
-            border: 1px solid #1a0a0a;
+            min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            color: #6a2a2a;
-            font-size: 14px;
-            transition: all 0.3s ease;
-            font-family: 'Courier New', monospace;
+            animation: flicker 3s infinite;
         }
-
-        .item:hover {
-            border-color: #3a1a1a;
-            box-shadow: 0 0 20px rgba(255,0,0,0.1);
+        @keyframes flicker {
+            0% { opacity: 1; }
+            5% { opacity: 0.8; }
+            10% { opacity: 1; }
+            15% { opacity: 0.9; }
+            20% { opacity: 1; }
+            100% { opacity: 1; }
         }
-
-        /* =============================================
-           ПОДСКАЗКА
-           ============================================= */
-        #hint-box {
-            position: absolute;
-            bottom: 100px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(10, 5, 5, 0.95);
-            border: 1px solid #1a0a0a;
-            padding: 10px 25px;
-            backdrop-filter: blur(5px);
-            z-index: 15;
-            min-width: 200px;
-            text-align: center;
-        }
-
-        #hint-text {
-            color: #4a2a2a;
-            font-size: 12px;
-            font-family: 'Press Start 2P', monospace;
-            letter-spacing: 2px;
-            text-shadow: 0 0 20px rgba(255,0,0,0.1);
-            transition: opacity 0.3s ease;
-        }
-
-        /* =============================================
-           ПРОГРЕСС
-           ============================================= */
-        #progress-bar {
-            position: absolute;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 200px;
-            height: 2px;
-            background: #0a0505;
-            border: 1px solid #1a0a0a;
-            overflow: hidden;
-            z-index: 15;
-        }
-
-        #progress-fill {
-            height: 100%;
-            width: 0%;
-            background: linear-gradient(90deg, #1a0a0a, #6a2a2a);
-            transition: width 0.5s ease;
-            box-shadow: 0 0 20px rgba(255,0,0,0.2);
-        }
-
-        /* =============================================
-           СКРИМЕР (LOMANDO-СТИЛЬ)
-           ============================================= */
-        #jumpscare {
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            z-index: 1000;
-            background: #000;
-            display: none;
-            justify-content: center;
-            align-items: center;
-            animation: jumpscareFlash 0.1s ease 5;
-        }
-
-        #jumpscare img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            filter: 
-                contrast(200%) 
-                brightness(30%) 
-                saturate(200%)
-                blur(2px);
-            image-rendering: pixelated;
-        }
-
-        @keyframes jumpscareFlash {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.1; }
-        }
-
-        /* =============================================
-           ЭФФЕКТЫ LOMANDO
-           ============================================= */
-        /* Глитч-эффект */
-        .glitch {
-            animation: glitch 0.2s ease 2;
-        }
-
-        @keyframes glitch {
-            0% { transform: translate(0); }
-            20% { transform: translate(-5px, 3px); }
-            40% { transform: translate(5px, -3px); }
-            60% { transform: translate(-3px, 5px); }
-            80% { transform: translate(3px, -5px); }
-            100% { transform: translate(0); }
-        }
-
-        /* Тряска экрана */
-        .screen-shake {
-            animation: screenShake 0.3s ease-in-out;
-        }
-
-        @keyframes screenShake {
-            0%, 100% { transform: translate(0, 0); }
-            10% { transform: translate(-10px, 5px); }
-            20% { transform: translate(10px, -5px); }
-            30% { transform: translate(-5px, 10px); }
-            40% { transform: translate(5px, -10px); }
-            50% { transform: translate(-10px, 5px); }
-            60% { transform: translate(10px, -5px); }
-            70% { transform: translate(-5px, 10px); }
-            80% { transform: translate(5px, -10px); }
-            90% { transform: translate(-10px, 5px); }
-        }
-
-        /* =============================================
-           ЛОР-ЗАПИСКИ (скрытый сюжет)
-           ============================================= */
-        #lore-popup {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(5, 2, 2, 0.98);
-            border: 2px solid #1a0a0a;
+        .container {
+            background: #111;
             padding: 40px;
-            max-width: 500px;
-            width: 90%;
-            z-index: 500;
-            display: none;
-            backdrop-filter: blur(20px);
-            box-shadow: 0 0 200px rgba(255,0,0,0.2);
-            font-family: 'Courier New', monospace;
+            border: 1px solid #333;
+            box-shadow: 0 0 30px rgba(255, 255, 255, 0.03);
+            width: 600px;
+            max-width: 95%;
+            text-align: center;
+            position: relative;
         }
-
-        #lore-popup.active {
-            display: block;
-            animation: loreAppear 0.5s ease;
+        .container::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            border: 1px solid #2a2a2a;
+            pointer-events: none;
         }
-
-        @keyframes loreAppear {
-            0% { opacity: 0; transform: translate(-50%, -50%) scale(0.9); }
-            100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-        }
-
-        #lore-popup h2 {
-            color: #4a1a1a;
-            font-family: 'Creepster', cursive;
-            font-size: 24px;
+        h1 {
+            font-size: 28px;
+            color: #d0d0d0;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+            letter-spacing: 6px;
             margin-bottom: 20px;
-            text-shadow: 0 0 30px rgba(255,0,0,0.1);
+            font-weight: 300;
         }
-
-        #lore-popup p {
-            color: #6a3a3a;
-            line-height: 2;
+        .sub {
+            color: #666;
             font-size: 14px;
+            letter-spacing: 2px;
+            margin-bottom: 30px;
+        }
+        input[type="password"] {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            color: #c0c0c0;
+            padding: 12px 20px;
+            font-size: 18px;
+            font-family: inherit;
+            width: 200px;
+            text-align: center;
+            letter-spacing: 4px;
+            outline: none;
+            transition: 0.3s;
+        }
+        input[type="password"]:focus {
+            border-color: #666;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.05);
+        }
+        .btn {
+            background: transparent;
+            border: 1px solid #444;
+            color: #b0b0b0;
+            padding: 12px 30px;
+            font-size: 16px;
+            font-family: inherit;
+            cursor: pointer;
+            letter-spacing: 3px;
+            transition: 0.3s;
+            margin-top: 20px;
+        }
+        .btn:hover {
+            background: #1a1a1a;
+            border-color: #777;
+            color: #fff;
+            box-shadow: 0 0 30px rgba(255, 255, 255, 0.03);
+        }
+        .hidden {
+            display: none !important;
+        }
+        #main {
+            text-align: left;
+        }
+        #main p {
+            margin: 15px 0;
+            line-height: 1.6;
+            color: #aaa;
+            font-size: 15px;
+        }
+        #main .highlight {
+            color: #c0c0c0;
+            font-weight: bold;
             letter-spacing: 1px;
+        }
+        .nav {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin: 25px 0 15px;
+            flex-wrap: wrap;
+        }
+        .nav button {
+            background: #151515;
+            border: 1px solid #2a2a2a;
+            color: #999;
+            padding: 10px 18px;
+            font-family: inherit;
+            font-size: 13px;
+            letter-spacing: 2px;
+            cursor: pointer;
+            transition: 0.3s;
+            flex: 1;
+            min-width: 80px;
+        }
+        .nav button:hover {
+            background: #1f1f1f;
+            border-color: #555;
+            color: #ddd;
+        }
+        .location {
+            background: #0d0d0d;
+            padding: 20px;
+            border-left: 2px solid #2a2a2a;
+            margin-top: 15px;
+            min-height: 160px;
+        }
+        .location h2 {
+            color: #bbb;
+            font-weight: 300;
+            letter-spacing: 3px;
+            font-size: 18px;
             margin-bottom: 15px;
         }
-
-        #lore-popup .close-lore {
-            background: #1a0a0a;
-            border: 1px solid #2a1a1a;
-            color: #6a2a2a;
-            padding: 10px 30px;
-            font-family: 'Press Start 2P', monospace;
-            font-size: 12px;
+        .location .detail {
+            color: #888;
+            font-size: 14px;
+            line-height: 1.8;
+        }
+        .location .detail span {
+            color: #aaa;
+            background: #1a1a1a;
+            padding: 2px 8px;
+            border: 1px solid #2a2a2a;
+        }
+        .glitch {
+            animation: glitch 0.5s infinite alternate;
+        }
+        @keyframes glitch {
+            0% { text-shadow: 2px 0 #ff0000, -2px 0 #00ffff; }
+            100% { text-shadow: -2px 0 #ff0000, 2px 0 #00ffff; }
+        }
+        .doll {
+            font-size: 60px;
             cursor: pointer;
-            transition: all 0.3s ease;
-            margin-top: 20px;
+            display: inline-block;
+            margin: 10px 0;
+            filter: grayscale(1);
+            transition: 0.3s;
+            user-select: none;
         }
-
-        #lore-popup .close-lore:hover {
-            border-color: #4a1a1a;
-            color: #aa4a4a;
+        .doll:hover {
+            filter: grayscale(0.5);
+            transform: scale(1.05);
         }
-
-        /* =============================================
-           АДАПТИВ
-           ============================================= */
-        @media (max-width: 768px) {
-            #main-title {
-                font-size: 36px;
-            }
-            #main-subtitle {
-                font-size: 10px;
-            }
-            .puzzle-container {
-                padding: 20px;
-            }
-            .puzzle-title {
-                font-size: 20px;
-            }
-            .code-input-group input {
-                font-size: 18px;
-                width: 80px;
-            }
-            .color-grid {
-                max-width: 200px;
-            }
-            .color-btn {
-                width: 40px;
-                height: 40px;
-            }
-            #inventory {
-                bottom: 10px;
-                right: 10px;
-                padding: 5px 10px;
-            }
-            .item {
-                width: 25px;
-                height: 25px;
-                font-size: 10px;
-            }
-            #hint-box {
-                bottom: 70px;
-                padding: 8px 15px;
-            }
-            #hint-text {
-                font-size: 8px;
-            }
-            #room-number {
-                font-size: 8px;
-                top: 10px;
-                left: 10px;
-            }
-            #progress-bar {
-                width: 120px;
-            }
-            .search-area {
-                height: 200px;
-            }
-            #lore-popup {
-                padding: 20px;
-            }
-            #lore-popup h2 {
-                font-size: 18px;
-            }
-            #lore-popup p {
-                font-size: 12px;
-            }
+        .call-btn {
+            background: #1a1a1a;
+            border: 1px solid #444;
+            color: #bbb;
+            padding: 8px 25px;
+            font-family: inherit;
+            font-size: 14px;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: 0.3s;
         }
-
-        @media (max-width: 480px) {
-            #main-title {
-                font-size: 24px;
-            }
-            #start-btn {
-                padding: 10px 30px;
-                font-size: 12px;
-            }
-            .puzzle-container {
-                padding: 15px;
-            }
-            .puzzle-title {
-                font-size: 16px;
-            }
-            .code-input-group input {
-                font-size: 14px;
-                width: 60px;
-                padding: 5px 10px;
-            }
-            .code-input-group button {
-                font-size: 10px;
-                padding: 5px 15px;
-            }
-            .color-btn {
-                width: 30px;
-                height: 30px;
-            }
-            #inventory span {
-                font-size: 8px;
-            }
+        .call-btn:hover {
+            background: #222;
+            border-color: #777;
+        }
+        .response-box {
+            background: #0a0a0a;
+            border: 1px solid #222;
+            padding: 15px;
+            margin-top: 15px;
+            color: #999;
+            font-size: 14px;
+            line-height: 1.6;
+            min-height: 50px;
+        }
+        .choice {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+        .choice button {
+            background: #111;
+            border: 1px solid #333;
+            color: #aaa;
+            padding: 10px 25px;
+            font-family: inherit;
+            cursor: pointer;
+            transition: 0.3s;
+            font-size: 13px;
+        }
+        .choice button:hover {
+            background: #1c1c1c;
+            border-color: #666;
+            color: #fff;
+        }
+        .footnote {
+            margin-top: 30px;
+            font-size: 11px;
+            color: #333;
+            letter-spacing: 2px;
+            border-top: 1px solid #1a1a1a;
+            padding-top: 20px;
+        }
+        .error-shake {
+            animation: shake 0.3s ease;
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-8px); }
+            75% { transform: translateX(8px); }
         }
     </style>
 </head>
 <body>
-
-    <!-- =============================================
-    СТАТИЧЕСКИЙ ШУМ
-    ============================================= -->
-    <div id="static-overlay"></div>
-
-    <!-- =============================================
-    ИГРОВОЙ КОНТЕЙНЕР
-    ============================================= -->
-    <div id="game-container">
-
-        <!-- Виньетка -->
-        <div id="vignette"></div>
-
-        <!-- =============================================
-        ГЛАВНЫЙ ЭКРАН
-        ============================================= -->
-        <div id="main-screen">
-            <h1 id="main-title">СЛОМАННЫЕ ЧАСЫ</h1>
-            <p id="main-subtitle">ЭПИЛОГ: ТИШИНА</p>
-            <button id="start-btn">НАЧАТЬ КОШМАР</button>
+<div class="container" id="app">
+    <!-- СТРАНИЦА ВХОДА -->
+    <div id="loginPage">
+        <h1>DREAMER'S HOUSE</h1>
+        <div class="sub">введите пароль</div>
+        <input type="password" id="passInput" placeholder="•••" maxlength="10">
+        <br>
+        <button class="btn" id="loginBtn">ВОЙТИ</button>
+        <div style="margin-top: 25px; font-size: 12px; color: #2a2a2a; letter-spacing: 1px;">
+            1.Лев.Ро 2.Прав.Тр 3.Прав.Кр 4.Лев.Кв.
         </div>
-
-        <!-- =============================================
-        КОНТЕЙНЕР КОМНАТ
-        ============================================= -->
-        <div id="room-container">
-            <div id="room">
-                <!-- Номер комнаты -->
-                <div id="room-number">КОМНАТА 1</div>
-
-                <!-- Прогресс -->
-                <div id="progress-bar">
-                    <div id="progress-fill"></div>
-                </div>
-
-                <!-- Подсказка -->
-                <div id="hint-box">
-                    <p id="hint-text">ТЫ ЗДЕСЬ НЕ ОДИН...</p>
-                </div>
-
-                <!-- Контейнер для головоломок -->
-                <div id="puzzle-area"></div>
-
-                <!-- Инвентарь -->
-                <div id="inventory">
-                    <span>ИНВЕНТАРЬ</span>
-                    <div id="items"></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- =============================================
-        СКРИМЕР
-        ============================================= -->
-        <div id="jumpscare">
-            <img src="" alt="!" id="scary-image">
-            <audio id="scary-sound" preload="auto"></audio>
-        </div>
-
-        <!-- =============================================
-        ЛОР-ПОПАП
-        ============================================= -->
-        <div id="lore-popup">
-            <h2 id="lore-title">ЗАПИСКА</h2>
-            <p id="lore-text">...</p>
-            <button class="close-lore" id="lore-close">ЗАКРЫТЬ</button>
-        </div>
-
     </div>
 
-    <!-- =============================================
-    JAVASCRIPT
-    ============================================= -->
-    <script>
-        // =============================================
-        // 1. ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ
-        // =============================================
+    <!-- ГЛАВНАЯ СТРАНИЦА -->
+    <div id="mainPage" class="hidden">
+        <h1>DREAMER'S HOUSE</h1>
+        <div class="sub" style="margin-bottom: 10px;">&nbsp;</div>
+        <div id="main">
+            <p>
+                <span class="highlight">Привет, возможно вам это скинул мой друг.</span><br>
+                Надеюсь вы оцените сайт и надеюсь всё вам тут понравится.<br><br>
+                С уважением <span class="highlight" style="color:#aaa;">Dreamer</span>
+            </p>
+            <p style="color:#666; font-size:13px;">
+                Некоторые буквы порой очень боятся света. Думаю этот проект будет интересным.
+            </p>
+            <div class="nav">
+                <button onclick="showLocation('room')">КОМНАТА</button>
+                <button onclick="showLocation('basement')">ПОДВАЛ</button>
+                <button onclick="showLocation('bridge')">МОСТ</button>
+            </div>
+            <div id="locationContainer" class="location">
+                <!-- сюда будет подгружаться локация -->
+                <div style="color:#555; font-size:13px; padding-top:10px;">выберите локацию</div>
+            </div>
+        </div>
+        <div class="footnote">Savior · 20**31226</div>
+    </div>
+</div>
 
-        const game = {
-            currentRoom: 0,
-            totalRooms: 3,
-            items: [],
-            hints: [],
-            solved: false,
-            isJumpscareActive: false,
-            roomData: []
-        };
+<script>
+    // === ПАРОЛЬ ===
+    const CORRECT_PASS = '312';
+    const loginPage = document.getElementById('loginPage');
+    const mainPage = document.getElementById('mainPage');
+    const passInput = document.getElementById('passInput');
+    const loginBtn = document.getElementById('loginBtn');
 
-        // =============================================
-        // 2. ДАННЫЕ КОМНАТ
-        // =============================================
-
-        game.roomData = [{
-            // КОМНАТА 1: КОДОВЫЙ ЗАМОК
-            number: 1,
-            title: 'ЗАМКНУТАЯ ДВЕРЬ',
-            description: 'На стене вырезано: "ВСПОМНИ ЧИСЛО"',
-            type: 'code',
-            code: '2713',
-            hint: 'Число на часах, когда я ушёл...',
-            items: ['Ключ'],
-            lore: 'Я не знаю, сколько я здесь. Часы остановились на 2:7:13. Или это был код?',
-            puzzle: function() {
-                return `
-                    <div class="puzzle-container">
-                        <div class="puzzle-title">${this.title}</div>
-                        <div class="puzzle-description">${this.description}</div>
-                        <div class="code-input-group">
-                            <input type="password" id="room-code" maxlength="4" placeholder="****">
-                            <button id="code-submit">ОТКРЫТЬ</button>
-                        </div>
-                        <div style="margin-top:20px;color:#3a1a1a;font-size:12px;font-family:'Press Start 2P',monospace;">
-                            ПОДСКАЗКА: ${this.hint}
-                        </div>
-                    </div>
-                `;
-            },
-            onLoad: function() {
-                document.getElementById('room-number').textContent = 'КОМНАТА ' + this.number;
-                document.getElementById('hint-text').textContent = this.hint;
-                
-                const submit = document.getElementById('code-submit');
-                const input = document.getElementById('room-code');
-                
-                if (submit) {
-                    submit.onclick = function() {
-                        const val = input.value.trim();
-                        if (val === game.roomData[0].code) {
-                            document.getElementById('hint-text').textContent = '✅ ДВЕРЬ ОТКРЫТА!';
-                            document.getElementById('hint-text').style.color = '#4aff4a';
-                            game.solved = true;
-                            game.items.push('Ключ');
-                            updateInventory();
-                            setTimeout(function() {
-                                showLore(game.roomData[0].lore);
-                                setTimeout(function() {
-                                    nextRoom();
-                                }, 3000);
-                            }, 1000);
-                        } else {
-                            document.getElementById('hint-text').textContent = '❌ НЕВЕРНО!';
-                            document.getElementById('hint-text').style.color = '#ff0000';
-                            document.body.classList.add('screen-shake');
-                            setTimeout(function() {
-                                document.body.classList.remove('screen-shake');
-                            }, 500);
-                            if (game.currentRoom === 0) {
-                                triggerJumpscare('https://i.imgur.com/6QZc0mY.png', 'https://www.myinstants.com/media/sounds/scary-scream.mp3');
-                            }
-                        }
-                    };
-                }
-                
-                if (input) {
-                    input.onkeypress = function(e) {
-                        if (e.key === 'Enter') submit.click();
-                    };
-                }
-            }
-        }, {
-            // КОМНАТА 2: ЦВЕТОВАЯ ПОСЛЕДОВАТЕЛЬНОСТЬ
-            number: 2,
-            title: 'ЦВЕТНАЯ ЛОВУШКА',
-            description: 'Нажми цвета в правильном порядке: Красный → Синий → Зелёный → Жёлтый',
-            type: 'color',
-            sequence: ['#ff0000', '#0000ff', '#00ff00', '#ffff00'],
-            currentStep: 0,
-            hint: 'Красный. Синий. Зелёный. Жёлтый.',
-            items: ['Записка'],
-            lore: 'Я помню эти цвета. Это был сигнал. Я должен был запомнить. Но я забыл. Простите меня.',
-            puzzle: function() {
-                return `
-                    <div class="puzzle-container">
-                        <div class="puzzle-title">${this.title}</div>
-                        <div class="puzzle-description">${this.description}</div>
-                        <div class="color-puzzle">
-                            <div class="color-grid">
-                                <div class="color-btn" style="background:#ff0000;" data-color="#ff0000"></div>
-                                <div class="color-btn" style="background:#0000ff;" data-color="#0000ff"></div>
-                                <div class="color-btn" style="background:#00ff00;" data-color="#00ff00"></div>
-                                <div class="color-btn" style="background:#ffff00;" data-color="#ffff00"></div>
-                            </div>
-                            <div style="color:#3a1a1a;font-size:12px;font-family:'Press Start 2P',monospace;">
-                                Шаг: <span id="step-display">0/4</span>
-                            </div>
-                            <div style="color:#3a1a1a;font-size:10px;font-family:'Press Start 2P',monospace;margin-top:10px;">
-                                ПОДСКАЗКА: ${this.hint}
-                            </div>
-                        </div>
-                    </div>
-                `;
-            },
-            onLoad: function() {
-                document.getElementById('room-number').textContent = 'КОМНАТА ' + this.number;
-                document.getElementById('hint-text').textContent = this.hint;
-                this.currentStep = 0;
-                
-                const buttons = document.querySelectorAll('.color-btn');
-                const stepDisplay = document.getElementById('step-display');
-                
-                buttons.forEach(btn => {
-                    btn.onclick = function() {
-                        const color = this.dataset.color;
-                        const expected = game.roomData[1].sequence[game.roomData[1].currentStep];
-                        
-                        if (color === expected) {
-                            this.classList.add('correct');
-                            game.roomData[1].currentStep++;
-                            if (stepDisplay) {
-                                stepDisplay.textContent = game.roomData[1].currentStep + '/4';
-                            }
-                            
-                            if (game.roomData[1].currentStep === 4) {
-                                document.getElementById('hint-text').textContent = '✅ ПОСЛЕДОВАТЕЛЬНОСТЬ ВЕРНА!';
-                                document.getElementById('hint-text').style.color = '#4aff4a';
-                                game.solved = true;
-                                game.items.push('Записка');
-                                updateInventory();
-                                setTimeout(function() {
-                                    showLore(game.roomData[1].lore);
-                                    setTimeout(function() {
-                                        nextRoom();
-                                    }, 3000);
-                                }, 1000);
-                            }
-                        } else {
-                            this.classList.add('wrong');
-                            document.getElementById('hint-text').textContent = '❌ НЕПРАВИЛЬНЫЙ ЦВЕТ!';
-                            document.getElementById('hint-text').style.color = '#ff0000';
-                            document.body.classList.add('screen-shake');
-                            setTimeout(function() {
-                                document.body.classList.remove('screen-shake');
-                                document.querySelectorAll('.color-btn').forEach(b => {
-                                    b.classList.remove('wrong', 'correct');
-                                });
-                                game.roomData[1].currentStep = 0;
-                                if (stepDisplay) {
-                                    stepDisplay.textContent = '0/4';
-                                }
-                            }, 1000);
-                            
-                            if (game.currentRoom === 1) {
-                                triggerJumpscare('https://i.imgur.com/6QZc0mY.png', 'https://www.myinstants.com/media/sounds/scary-scream.mp3');
-                            }
-                        }
-                    };
-                });
-            }
-        }, {
-            // КОМНАТА 3: ПОИСК ПРЕДМЕТОВ
-            number: 3,
-            title: 'НАЙДИ СТРЕЛКУ',
-            description: 'Где-то здесь спрятана стрелка от часов. Найди её.',
-            type: 'search',
-            hint: 'Стрелка указывает на время...',
-            items: ['Стрелка'],
-            lore: 'Она всегда была здесь. Стрелка. Она указывала на 7:13. Я не понял, что это значило. До сегодняшнего дня.',
-            puzzle: function() {
-                return `
-                    <div class="puzzle-container">
-                        <div class="puzzle-title">${this.title}</div>
-                        <div class="puzzle-description">${this.description}</div>
-                        <div class="search-area" id="search-area">
-                            <div style="display:flex;justify-content:center;align-items:center;height:100%;color:#1a0a0a;font-family:'Press Start 2P',monospace;font-size:12px;">
-                                🕯️ КЛИКНИ, ЧТОБЫ ОСВЕТИТЬ
-                            </div>
-                            <div class="hidden-item" id="hidden-item" style="top:40%;left:60%;"></div>
-                            <div class="hidden-item" id="hidden-item2" style="top:70%;left:30%;"></div>
-                            <div class="hidden-item" id="hidden-item3" style="top:20%;left:20%;"></div>
-                        </div>
-                        <div style="margin-top:20px;color:#3a1a1a;font-size:10px;font-family:'Press Start 2P',monospace;">
-                            ПОДСКАЗКА: ${this.hint}
-                        </div>
-                        <div style="margin-top:10px;color:#1a0a0a;font-size:10px;font-family:'Press Start 2P',monospace;">
-                            Найдено: <span id="found-count">0</span>/3
-                        </div>
-                    </div>
-                `;
-            },
-            onLoad: function() {
-                document.getElementById('room-number').textContent = 'КОМНАТА ' + this.number;
-                document.getElementById('hint-text').textContent = this.hint;
-                let found = 0;
-                const totalItems = 3;
-                
-                const area = document.getElementById('search-area');
-                const items = area ? area.querySelectorAll('.hidden-item') : [];
-                const foundDisplay = document.getElementById('found-count');
-                
-                items.forEach(item => {
-                    item.classList.add('visible');
-                    item.onclick = function(e) {
-                        e.stopPropagation();
-                        if (this.classList.contains('found')) return;
-                        this.classList.add('found');
-                        found++;
-                        if (foundDisplay) {
-                            foundDisplay.textContent = found;
-                        }
-                        
-                        if (found === totalItems) {
-                            document.getElementById('hint-text').textContent = '✅ ВСЕ ПРЕДМЕТЫ НАЙДЕНЫ!';
-                            document.getElementById('hint-text').style.color = '#4aff4a';
-                            game.solved = true;
-                            game.items.push('Стрелка');
-                            updateInventory();
-                            setTimeout(function() {
-                                showLore(game.roomData[2].lore);
-                                setTimeout(function() {
-                                    // ФИНАЛ
-                                    document.getElementById('hint-text').textContent = '🏆 ТЫ ВЫЖИЛ... ПОКА ЧТО';
-                                    document.getElementById('hint-text').style.color = '#4a4a4a';
-                                    document.getElementById('room-number').textContent = 'КОНЕЦ';
-                                    setTimeout(function() {
-                                        alert('💀 Ты сломал часы. Ты сломал время. Ты сломал себя.');
-                                        location.reload();
-                                    }, 3000);
-                                }, 3000);
-                            }, 1000);
-                        }
-                    };
-                });
-                
-                if (area) {
-                    area.onclick = function(e) {
-                        if (e.target === this) {
-                            this.style.background = 'rgba(20,10,10,0.9)';
-                            this.querySelector('div').style.display = 'none';
-                            setTimeout(function() {
-                                area.style.background = '#0a0505';
-                            }, 500);
-                        }
-                    };
-                }
-            }
-        }];
-
-        // =============================================
-        // 3. ИНИЦИАЛИЗАЦИЯ
-        // =============================================
-
-        const mainScreen = document.getElementById('main-screen');
-        const roomContainer = document.getElementById('room-container');
-        const startBtn = document.getElementById('start-btn');
-        const puzzleArea = document.getElementById('puzzle-area');
-
-        startBtn.onclick = function() {
-            mainScreen.classList.add('hidden');
-            roomContainer.classList.add('active');
-            loadRoom(0);
-        };
-
-        // =============================================
-        // 4. ЗАГРУЗКА КОМНАТЫ
-        // =============================================
-
-        function loadRoom(index) {
-            game.currentRoom = index;
-            game.solved = false;
-            
-            const roomData = game.roomData[index];
-            if (!roomData) return;
-            
-            puzzleArea.innerHTML = roomData.puzzle();
-            updateInventory();
-            
-            setTimeout(function() {
-                roomData.onLoad();
-            }, 100);
+    function tryLogin() {
+        if (passInput.value.trim() === CORRECT_PASS) {
+            loginPage.classList.add('hidden');
+            mainPage.classList.remove('hidden');
+            // первая локация по умолчанию
+            showLocation('room');
+        } else {
+            passInput.classList.add('error-shake');
+            setTimeout(() => passInput.classList.remove('error-shake'), 400);
+            passInput.value = '';
+            passInput.focus();
         }
+    }
 
-        // =============================================
-        // 5. СЛЕДУЮЩАЯ КОМНАТА
-        // =============================================
+    loginBtn.addEventListener('click', tryLogin);
+    passInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') tryLogin(); });
 
-        function nextRoom() {
-            const next = game.currentRoom + 1;
-            if (next < game.totalRooms) {
-                loadRoom(next);
+    // === ЛОКАЦИИ ===
+    const locationContainer = document.getElementById('locationContainer');
+
+    // состояния для сюжета
+    let hasCalled = false;
+    let hasAgreed = false;
+
+    function showLocation(name) {
+        let html = '';
+        switch (name) {
+            case 'room':
+                html = `
+                    <h2>☰ КОМНАТА</h2>
+                    <div class="detail">
+                        <p>Старые часы на стене. Стрелки застыли.</p>
+                        <p><span>20**31226</span> — выбито на циферблате.</p>
+                        <p style="margin-top:12px; font-size:13px; color:#666;">[кликните по часам, чтобы услышать тиканье]</p>
+                        <button class="btn" style="padding:6px 20px; font-size:12px; margin-top:5px;" onclick="alert('Тик-так... 20**31226')">⏱️ ЧАСЫ</button>
+                    </div>
+                `;
+                break;
+
+            case 'basement':
+                html = `
+                    <h2>☰ ПОДВАЛ</h2>
+                    <div class="detail">
+                        <p>Тусклый свет. В углу — кукла с исцарапанным лицом.</p>
+                        <div class="doll" onclick="document.getElementById('dollScratch').classList.toggle('hidden')">🧸</div>
+                        <div id="dollScratch" class="hidden" style="margin:10px 0; color:#888; font-size:13px; border:1px solid #1a1a1a; padding:10px;">
+                            На спине куклы выцарапано: <strong style="color:#aaa;">20**31226</strong>
+                            <br><button class="call-btn" onclick="makeCall()">📞 ПОЗВОНИТЬ</button>
+                            <div id="callResponse" class="response-box hidden">
+                                <span style="color:#aaa;">"Привет, я Dreamer. Иди под мост и мы там увидимся."</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                break;
+
+            case 'bridge':
+                html = `
+                    <h2>☰ МОСТ</h2>
+                    <div class="detail">
+                        <p>Тёмный мост. Вода внизу почти не видна.</p>
+                        <p style="color:#777; font-size:13px;">Вы видите ту же куклу, что была в подвале.</p>
+                        <p style="color:#666; font-size:13px; margin-top:8px;">Перед вами появляется <span style="color:#aaa;">Длинный мужчина</span>.</p>
+                        <div style="background:#0a0a0a; border:1px solid #222; padding:15px; margin:15px 0; font-style:italic; color:#999;">
+                            «Я знаю, как изменить сайт. Сделаю его популярным. Отдай мне куклу — и молчи.»
+                        </div>
+                        <div class="choice">
+                            <button onclick="makeChoice(true)">✅ СОГЛАСИТЬСЯ</button>
+                            <button onclick="makeChoice(false)">❌ ОТКАЗАТЬСЯ</button>
+                        </div>
+                        <div id="choiceResult" class="response-box" style="margin-top:10px;">
+                            ${hasAgreed ? 'Вы согласились. Сайт изменился... но совесть не даёт покоя.' : 'Вы ещё не сделали выбор.'}
+                        </div>
+                        ${hasAgreed ? `<p style="color:#555; font-size:12px; margin-top:10px;">Через месяц вы рассказываете всё Ron. Он блокирует вас. Длинный мужчина исчезает. Вы потеряли контроль над сайтом...</p>` : ''}
+                    </div>
+                `;
+                break;
+
+            default:
+                html = `<div style="color:#555;">неизвестная локация</div>`;
+        }
+        locationContainer.innerHTML = html;
+    }
+
+    // === ФУНКЦИИ ДЛЯ СЮЖЕТА ===
+    function makeCall() {
+        if (hasCalled) return;
+        hasCalled = true;
+        const resp = document.getElementById('callResponse');
+        if (resp) {
+            resp.classList.remove('hidden');
+            // дополнительный эффект
+            const doll = document.querySelector('.doll');
+            if (doll) doll.style.filter = 'grayscale(0.2)';
+        }
+    }
+
+    function makeChoice(agree) {
+        hasAgreed = agree;
+        const result = document.getElementById('choiceResult');
+        if (result) {
+            if (agree) {
+                result.innerHTML = '✅ Вы согласились. Сайт стал популярным, но вы потеряли себя. Через месяц Ron блокирует вас. Длинный мужчина исчез. Вы приходите к главному герою — нам.';
             } else {
-                // Финальный экран
-                document.getElementById('hint-text').textContent = '💀 ВРЕМЯ ВЫШЛО';
-                document.getElementById('hint-text').style.color = '#ff0000';
-                document.getElementById('room-number').textContent = 'КОНЕЦ';
-                setTimeout(function() {
-                    triggerJumpscare('https://i.imgur.com/6QZc0mY.png', 'https://www.myinstants.com/media/sounds/scary-scream.mp3');
-                }, 2000);
+                result.innerHTML = '❌ Вы отказались. Длинный мужчина исчезает, но кукла остаётся. Тайна Dreamer не раскрыта.';
             }
         }
+        // обновим текст выбора, чтобы показать состояние
+        showLocation('bridge');
+    }
 
-        // =============================================
-        // 6. ИНВЕНТАРЬ
-        // =============================================
+    // делаем функцию глобальной для onclick
+    window.showLocation = showLocation;
+    window.makeCall = makeCall;
+    window.makeChoice = makeChoice;
 
-        function updateInventory() {
-            const container = document.getElementById('items');
-            container.innerHTML = '';
-            game.items.forEach(item => {
-                const div = document.createElement('div');
-                div.className = 'item';
-                div.textContent = item[0];
-                div.title = item;
-                container.appendChild(div);
-            });
-        }
-
-        // =============================================
-        // 7. ЛОР-ПОПАП
-        // =============================================
-
-        function showLore(text) {
-            const popup = document.getElementById('lore-popup');
-            const loreText = document.getElementById('lore-text');
-            loreText.textContent = text;
-            popup.classList.add('active');
-            
-            document.getElementById('lore-close').onclick = function() {
-                popup.classList.remove('active');
-            };
-        }
-
-        // =============================================
-        // 8. СКРИМЕР
-        // =============================================
-
-        function triggerJumpscare(imageUrl, soundUrl) {
-            if (game.isJumpscareActive) return;
-            game.isJumpscareActive = true;
-            
-            const jumpscare = document.getElementById('jumpscare');
-            const img = document.getElementById('scary-image');
-            const audio = document.getElementById('scary-sound');
-            
-            img.src = imageUrl;
-            jumpscare.style.display = 'flex';
-            
-            audio.src = soundUrl;
-            audio.volume = 0.5;
-            audio.play().catch(function(e) {});
-            
-            document.body.classList.add('screen-shake');
-            
-            setTimeout(function() {
-                jumpscare.style.display = 'none';
-                document.body.classList.remove('screen-shake');
-                game.isJumpscareActive = false;
-            }, 3000);
-        }
-
-        // =============================================
-        // 9. ФОНОВЫЕ ЭФФЕКТЫ (LOMANDO)
-        // =============================================
-
-        // Случайные шёпоты
-        setInterval(function() {
-            if (document.getElementById('room-container').classList.contains('active')) {
-                const whispers = [
-                    'ТЫ СЛЫШИШЬ МЕНЯ?',
-                    '...ВРЕМЯ ИДЁТ...',
-                    '...ПОСМОТРИ НА ЧАСЫ...',
-                    '...ТЫ НЕ ОДИН...',
-                    '...ВЫЙДИ...',
-                    '...СМОТРИ...',
-                    '...ЗДЕСЬ ТЕМНО...',
-                    '...Я ВИЖУ ТЕБЯ...'
-                ];
-                if (Math.random() > 0.85) {
-                    const whisper = whispers[Math.floor(Math.random() * whispers.length)];
-                    document.getElementById('hint-text').textContent = '👻 ' + whisper;
-                    document.getElementById('hint-text').style.color = '#6a3a6a';
-                    setTimeout(function() {
-                        if (!game.solved) {
-                            const room = game.roomData[game.currentRoom];
-                            if (room) {
-                                document.getElementById('hint-text').textContent = room.hint;
-                                document.getElementById('hint-text').style.color = '#4a2a2a';
-                            }
-                        }
-                    }, 3000);
-                }
-            }
-        }, 10000);
-
-        // Глитч-эффект на прогресс-бар
-        setInterval(function() {
-            if (document.getElementById('room-container').classList.contains('active') && Math.random() > 0.8) {
-                const fill = document.getElementById('progress-fill');
-                const current = parseFloat(fill.style.width) || 0;
-                if (current < 90) {
-                    fill.style.width = (current + 5) + '%';
-                    setTimeout(function() {
-                        fill.style.width = current + '%';
-                    }, 200);
-                }
-            }
-        }, 3000);
-
-        // =============================================
-        // 10. КОНСОЛЬНЫЙ ЛОР (ARG)
-        // =============================================
-
-        console.log('%c🕯️ СЛОМАННЫЕ ЧАСЫ: ЭПИЛОГ', 'font-size:24px;color:#cc0000;');
-        console.log('%cТЫ НАШЁЛ ЭТО. ЗНАЧИТ, ТЫ ГОТОВ.', 'font-size:14px;color:#6a2a2a;');
-        console.log('%cВРЕМЯ ВЫШЛО. ОНО ВСЕГДА ВЫХОДИТ.', 'font-size:14px;color:#3a1a1a;');
-        console.log('%c7:13 — ЭТО НЕ ПРОСТО ЧИСЛО. ЭТО ПРОЩАНИЕ.', 'font-size:14px;color:#1a0a0a;');
-        console.log('%c...', 'font-size:40px;color:#000;');
-        console.log('%cОНИ ВСЁ ЕЩЁ ЗДЕСЬ.', 'font-size:18px;color:#ff0000;');
-
-        // =============================================
-        // 11. ЗАЩИТА ОТ КОНСОЛЬНЫХ ЧИТОВ
-        // =============================================
-
-        Object.defineProperty(game, 'solved', {
-            set: function(val) {
-                if (this._solved) return;
-                this._solved = val;
-            },
-            get: function() {
-                return this._solved;
-            }
-        });
-
-        console.log('🔐 КОДЫ КОМНАТ:');
-        console.log('  Комната 1: ' + game.roomData[0].code);
-        console.log('  Комната 2: Красный → Синий → Зелёный → Жёлтый');
-        console.log('  Комната 3: Найди 3 предмета');
-    </script>
-
+    // начальное состояние
+    showLocation('room');
+</script>
 </body>
 </html>
